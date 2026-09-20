@@ -1,3 +1,9 @@
 .venv/
 __pycache__/
 *_dated.*
+*_fechada/
+dist/
+build/
+*.spec.bak
+appimagetool*
+squashfs-root/

@@ -1,0 +1,62 @@
+name: Build portable
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: |
+          python -m pip install -U pip
+          python -m pip install -r requirements-build.txt
+          pyinstaller --noconfirm --clean photoDate.spec
+      - uses: actions/upload-artifact@v4
+        with:
+          name: photoDate-windows
+          path: dist/photoDate.exe
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-tk libtk8.6
+          chmod +x scripts/build_linux.sh
+          # build sin recrear venv del PATH de actions
+          python -m pip install -U pip
+          python -m pip install -r requirements-build.txt
+          pyinstaller --noconfirm --clean photoDate.spec
+      - name: Pack AppImage
+        run: |
+          set -e
+          DIST=dist
+          APPDIR=$DIST/photoDate.AppDir
+          rm -rf "$APPDIR"
+          mkdir -p "$APPDIR/usr/bin"
+          cp "$DIST/photoDate" "$APPDIR/usr/bin/photoDate"
+          chmod +x "$APPDIR/usr/bin/photoDate"
+          printf '%s\n' '[Desktop Entry]' 'Type=Application' 'Name=photoDate' 'Exec=photoDate' 'Icon=photoDate' 'Categories=Graphics;' 'Terminal=false' > "$APPDIR/photoDate.desktop"
+          python -c "from PIL import Image,ImageDraw; i=Image.new('RGBA',(256,256),(30,30,30,255)); d=ImageDraw.Draw(i); d.rounded_rectangle((24,24,232,232),32,fill=(255,140,0,255)); i.save('$APPDIR/photoDate.png')"
+          printf '%s\n' '#!/bin/sh' 'HERE="$(dirname "$(readlink -f "$0")")"' 'exec "$HERE/usr/bin/photoDate" "$@"' > "$APPDIR/AppRun"
+          chmod +x "$APPDIR/AppRun"
+          curl -L -o "$DIST/appimagetool" https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x "$DIST/appimagetool"
+          cd "$DIST" && ./appimagetool --appimage-extract
+          ARCH=x86_64 ./squashfs-root/AppRun photoDate.AppDir photoDate-x86_64.AppImage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: photoDate-linux
+          path: |
+            dist/photoDate
+            dist/photoDate-x86_64.AppImage

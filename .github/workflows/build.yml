@@ -1,9 +1,9 @@
 name: Build portable
 
 on:
-  workflow_dispatch:
   push:
-    tags: ["v*"]
+    branches: [master, main]
+  workflow_dispatch:  # por si quieres relanzarlo a mano
 
 jobs:
   windows:
@@ -16,6 +16,7 @@ jobs:
       - run: |
           python -m pip install -U pip
           python -m pip install -r requirements-build.txt
+          python -c "from PIL import Image; img=Image.open('brosgor.png').convert('RGBA'); sizes=[(16,16),(32,32),(48,48),(64,64),(128,128),(256,256)]; imgs=[img.resize(s, Image.Resampling.LANCZOS) for s in sizes]; imgs[-1].save('brosgor.ico', format='ICO', sizes=[(i.width,i.height) for i in imgs])"
           pyinstaller --noconfirm --clean photoDate.spec
       - uses: actions/upload-artifact@v4
         with:
@@ -47,7 +48,7 @@ jobs:
           cp "$DIST/photoDate" "$APPDIR/usr/bin/photoDate"
           chmod +x "$APPDIR/usr/bin/photoDate"
           printf '%s\n' '[Desktop Entry]' 'Type=Application' 'Name=photoDate' 'Exec=photoDate' 'Icon=photoDate' 'Categories=Graphics;' 'Terminal=false' > "$APPDIR/photoDate.desktop"
-          python -c "from PIL import Image,ImageDraw; i=Image.new('RGBA',(256,256),(30,30,30,255)); d=ImageDraw.Draw(i); d.rounded_rectangle((24,24,232,232),32,fill=(255,140,0,255)); i.save('$APPDIR/photoDate.png')"
+          python -c "from PIL import Image; from pathlib import Path; import shutil; p=Path('$APPDIR/photoDate.png'); Image.open('brosgor.png').convert('RGBA').resize((256,256)).save(p); shutil.copy(p, '$APPDIR/.DirIcon')"
           printf '%s\n' '#!/bin/sh' 'HERE="$(dirname "$(readlink -f "$0")")"' 'exec "$HERE/usr/bin/photoDate" "$@"' > "$APPDIR/AppRun"
           chmod +x "$APPDIR/AppRun"
           curl -L -o "$DIST/appimagetool" https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage

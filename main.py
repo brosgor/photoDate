@@ -19,11 +19,30 @@ FILETYPES = [
 ]
 
 
+def _app_dir() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+    return Path(__file__).resolve().parent
+
+
+def _set_window_icon(root: tk.Tk) -> None:
+    png = _app_dir() / "brosgor.png"
+    if not png.is_file():
+        png = Path(__file__).resolve().parent / "brosgor.png"
+    if not png.is_file():
+        return
+    try:
+        root.iconphoto(True, tk.PhotoImage(file=str(png)))
+    except tk.TclError:
+        pass
+
+
 def run_gui() -> None:
     root = tk.Tk()
     root.title("photoDate")
     root.minsize(520, 340)
     root.geometry("580x360")
+    _set_window_icon(root)
 
     mode_var = tk.StringVar(value="carpeta")  # carpeta | archivos
     path_var = tk.StringVar()

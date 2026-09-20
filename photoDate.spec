@@ -12,6 +12,9 @@ datas += tmp_ret[0]
 binaries += tmp_ret[1]
 hiddenimports += tmp_ret[2]
 
+# Icono también dentro del bundle (ventana tkinter)
+datas += [("brosgor.png", ".")]
+
 a = Analysis(
     ["main.py"],
     pathex=[],
@@ -46,4 +49,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon="brosgor.ico",
 )

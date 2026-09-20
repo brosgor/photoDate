@@ -37,18 +37,17 @@ Categories=Graphics;Photography;
 Terminal=false
 EOF
 
+# Icono AppImage = brosgor.png
 python - <<'PY'
 from pathlib import Path
-from PIL import Image, ImageDraw
+from PIL import Image
 import shutil
 
 root = Path("dist/photoDate.AppDir")
-img = Image.new("RGBA", (256, 256), (30, 30, 30, 255))
-d = ImageDraw.Draw(img)
-d.rounded_rectangle((24, 24, 232, 232), radius=32, fill=(255, 140, 0, 255))
-d.text((48, 100), "DATE", fill=(30, 30, 30, 255))
+src = Path("brosgor.png")
+img = Image.open(src).convert("RGBA")
 icon = root / "photoDate.png"
-img.save(icon)
+img.resize((256, 256), Image.Resampling.LANCZOS).save(icon)
 shutil.copy(icon, root / ".DirIcon")
 PY
 
